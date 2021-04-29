@@ -17,43 +17,41 @@ public class CountersTest {
 
     private MapDriver<LongWritable, Text, Text, IntWritable> mapDriver;
 
-    private final String testMalformedIP = "mama mila ramu";
-    private final String testIP = "ip1 - - [24/Apr/2011:04:06:01 -0400] \"GET /~strabal/grease/photo9/927-3.jpg HTTP/1.1\" 200 40028 \"-\" \"Mozilla/5.0 (compatible; YandexImages/3.0; +http://yandex.com/bots)\"\n";
+    private final String testMalformed = "mama mila ramu";
+    private final String test = "2021-03-05 13:05:30,1";
 
     @Before
     public void setUp() {
         HW1Mapper mapper = new HW1Mapper();
         mapDriver = MapDriver.newMapDriver(mapper);
     }
-
+    /* 1 bad*/
     @Test
     public void testMapperCounterOne() throws IOException  {
         mapDriver
-                .withInput(new LongWritable(), new Text(testMalformedIP))
+                .withInput(new LongWritable(), new Text(testMalformed))
                 .runTest();
         assertEquals("Expected 1 counter increment", 1, mapDriver.getCounters()
                 .findCounter(CounterType.MALFORMED).getValue());
     }
-
+    /*1 good*/
     @Test
     public void testMapperCounterZero() throws IOException {
-        UserAgent userAgent = UserAgent.parseUserAgentString(testIP);
         mapDriver
-                .withInput(new LongWritable(), new Text(testIP))
-                .withOutput(new Text(userAgent.getBrowser().getName()), new IntWritable(1))
+                .withInput(new LongWritable(), new Text(test))
+                .withOutput(new Text("2021-03-05 13"), new IntWritable(1))
                 .runTest();
         assertEquals("Expected 1 counter increment", 0, mapDriver.getCounters()
                 .findCounter(CounterType.MALFORMED).getValue());
     }
-
+    /*2 bad, 1 good*/
     @Test
     public void testMapperCounters() throws IOException {
-        UserAgent userAgent = UserAgent.parseUserAgentString(testIP);
         mapDriver
-                .withInput(new LongWritable(), new Text(testIP))
-                .withInput(new LongWritable(), new Text(testMalformedIP))
-                .withInput(new LongWritable(), new Text(testMalformedIP))
-                .withOutput(new Text(userAgent.getBrowser().getName()), new IntWritable(1))
+                .withInput(new LongWritable(), new Text(test))
+                .withInput(new LongWritable(), new Text(testMalformed))
+                .withInput(new LongWritable(), new Text(testMalformed))
+                .withOutput(new Text("2021-03-05 13"), new IntWritable(1))
                 .runTest();
 
         assertEquals("Expected 2 counter increment", 2, mapDriver.getCounters()
